@@ -15,7 +15,12 @@
     "format:check": "prettier --check \"**/*.{ts,json,md,yml,yaml}\"",
     "typecheck": "tsc --build",
     "test": "npm run test --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present && rm -rf node_modules"
+    "clean": "npm run clean --workspaces --if-present && rm -rf node_modules",
+    "migrate": "node-pg-migrate --tsconfig tsconfig.base.json --migration-file-language ts --migrations-dir packages/shared/src/db/migrations",
+    "migrate:up": "npm run migrate -- up",
+    "migrate:down": "npm run migrate -- down",
+    "migrate:create": "npm run migrate -- create",
+    "seed": "ts-node --project tsconfig.base.json packages/shared/src/db/seed.ts"
   },
   "engines": {
     "node": ">=20.0.0"
