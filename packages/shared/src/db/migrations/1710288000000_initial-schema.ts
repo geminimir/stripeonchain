@@ -41,7 +41,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     currency: {
       type: 'varchar(10)',
       notNull: true,
-      default: "'usd'",
+      default: pgm.func("'usd'"),
     },
     payment_method_type: {
       type: 'varchar(50)',
@@ -121,12 +121,12 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     finality_status: {
       type: 'finality_status',
       notNull: true,
-      default: "'pending'",
+      default: pgm.func("'pending'"),
     },
     receipt: {
       type: 'jsonb',
       notNull: true,
-      default: "'{}'",
+      default: pgm.func("'{}'"),
     },
     detected_at: {
       type: 'timestamptz',
@@ -204,7 +204,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     chains: {
       type: 'supported_chain[]',
       notNull: true,
-      default: "'{}'",
+      default: pgm.func("'{}'"),
     },
     active: {
       type: 'boolean',
@@ -253,7 +253,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     delivery_status: {
       type: 'delivery_status',
       notNull: true,
-      default: "'pending'",
+      default: pgm.func("'pending'"),
     },
     http_status_code: {
       type: 'integer',
