@@ -1,0 +1,123 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stripeonchain}
+      POSTGRES_USER: ${POSTGRES_USER:-stripeonchain}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stripeonchain_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stripeonchain}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  stripe-listener:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: node services/stripe-listener/dist/index.js
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-stripeonchain}:${POSTGRES_PASSWORD:-stripeonchain_dev}@postgres:5432/${POSTGRES_DB:-stripeonchain}
+      REDIS_URL: redis://redis:6379
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      PORT: "3001"
+    ports:
+      - "${STRIPE_LISTENER_PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  chain-watcher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: node services/chain-watcher/dist/index.js
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-stripeonchain}:${POSTGRES_PASSWORD:-stripeonchain_dev}@postgres:5432/${POSTGRES_DB:-stripeonchain}
+      REDIS_URL: redis://redis:6379
+      BASE_RPC_URL: ${BASE_RPC_URL}
+      BASE_RPC_WS_URL: ${BASE_RPC_WS_URL}
+      ETHEREUM_RPC_URL: ${ETHEREUM_RPC_URL}
+      ETHEREUM_RPC_WS_URL: ${ETHEREUM_RPC_WS_URL}
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL}
+      POLYGON_RPC_WS_URL: ${POLYGON_RPC_WS_URL}
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL}
+      SOLANA_RPC_WS_URL: ${SOLANA_RPC_WS_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  correlator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: node services/correlator/dist/index.js
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-stripeonchain}:${POSTGRES_PASSWORD:-stripeonchain_dev}@postgres:5432/${POSTGRES_DB:-stripeonchain}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  finality-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: node services/finality-tracker/dist/index.js
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-stripeonchain}:${POSTGRES_PASSWORD:-stripeonchain_dev}@postgres:5432/${POSTGRES_DB:-stripeonchain}
+      REDIS_URL: redis://redis:6379
+      BASE_RPC_URL: ${BASE_RPC_URL}
+      ETHEREUM_RPC_URL: ${ETHEREUM_RPC_URL}
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL}
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  webhook-emitter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: node services/webhook-emitter/dist/index.js
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-stripeonchain}:${POSTGRES_PASSWORD:-stripeonchain_dev}@postgres:5432/${POSTGRES_DB:-stripeonchain}
+      REDIS_URL: redis://redis:6379
+      WEBHOOK_SIGNING_SECRET: ${WEBHOOK_SIGNING_SECRET}
+      PORT: "3002"
+    ports:
+      - "${WEBHOOK_EMITTER_PORT:-3002}:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:
