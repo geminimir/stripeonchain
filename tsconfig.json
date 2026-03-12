@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "services/stripe-listener" },
+    { "path": "services/chain-watcher" },
+    { "path": "services/correlator" },
+    { "path": "services/finality-tracker" },
+    { "path": "services/webhook-emitter" }
+  ]
+}
