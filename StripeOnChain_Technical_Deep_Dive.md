@@ -1,4 +1,4 @@
-# CryptoVerifyHook
+# StripeOnChain
 
 **Unified On-Chain Settlement Verification for Stripe Stablecoin Payments**
 
@@ -10,13 +10,13 @@
 
 ## Executive Summary
 
-CryptoVerifyHook is an open-source middleware service that bridges the gap between Stripe's payment event system and blockchain settlement reality. It provides independent, on-chain verification of stablecoin payments processed through Stripe, emitting normalized webhook events that mirror Stripe's existing webhook contract — including HMAC-SHA256 signatures, idempotency keys, and exponential backoff retries.
+StripeOnChain is an open-source middleware service that bridges the gap between Stripe's payment event system and blockchain settlement reality. It provides independent, on-chain verification of stablecoin payments processed through Stripe, emitting normalized webhook events that mirror Stripe's existing webhook contract — including HMAC-SHA256 signatures, idempotency keys, and exponential backoff retries.
 
 The project addresses a fundamental architectural gap in Stripe's stablecoin payments infrastructure: **Stripe abstracts away the blockchain entirely.** When a customer pays with USDC via Stripe, the merchant receives a `payment_intent.succeeded` event — but has zero visibility into whether the on-chain transfer actually settled, which chain it settled on, what the transaction hash was, or how many block confirmations it has. For businesses that need proof of settlement, want to trigger smart contract logic post-payment, or must reconcile on-chain state with their accounting systems, this opacity is a critical gap.
 
 > **Why This Matters to Stripe**
 >
-> Stripe's two largest strategic bets are stablecoins and AI-driven commerce. They acquired Bridge for $1.1B, are co-building the Tempo blockchain, acquired Privy for wallet infrastructure, and launched stablecoin subscription payments. As stablecoin transaction volume quadruples and Stripe processes an increasing share of crypto-native payments, the demand for on-chain transparency will grow exponentially. CryptoVerifyHook solves this problem before Stripe's own product team ships a native solution — demonstrating the exact kind of infrastructure thinking the Crypto sub-team needs.
+> Stripe's two largest strategic bets are stablecoins and AI-driven commerce. They acquired Bridge for $1.1B, are co-building the Tempo blockchain, acquired Privy for wallet infrastructure, and launched stablecoin subscription payments. As stablecoin transaction volume quadruples and Stripe processes an increasing share of crypto-native payments, the demand for on-chain transparency will grow exponentially. StripeOnChain solves this problem before Stripe's own product team ships a native solution — demonstrating the exact kind of infrastructure thinking the Crypto sub-team needs.
 
 ---
 
@@ -56,11 +56,11 @@ After a stablecoin payment settles on-chain, developers may need to trigger down
 
 ---
 
-## 2. How CryptoVerifyHook Solves It
+## 2. How StripeOnChain Solves It
 
 ### 2.1 Core Design Principle
 
-**Mirror Stripe's patterns, extend with blockchain data.** CryptoVerifyHook doesn't replace Stripe's payment flow. It runs in parallel, independently verifying on-chain settlement and enriching the merchant's event stream with blockchain-native data. Every webhook it emits follows Stripe's signing scheme, retry logic, and payload structure — so developers who know Stripe's webhooks already know how to consume CryptoVerifyHook's events.
+**Mirror Stripe's patterns, extend with blockchain data.** StripeOnChain doesn't replace Stripe's payment flow. It runs in parallel, independently verifying on-chain settlement and enriching the merchant's event stream with blockchain-native data. Every webhook it emits follows Stripe's signing scheme, retry logic, and payload structure — so developers who know Stripe's webhooks already know how to consume StripeOnChain's events.
 
 ### 2.2 What It Does
 
@@ -74,7 +74,7 @@ After a stablecoin payment settles on-chain, developers may need to trigger down
 
 ### 2.3 Webhook Event Types
 
-CryptoVerifyHook emits the following custom event types, all following Stripe's webhook payload structure:
+StripeOnChain emits the following custom event types, all following Stripe's webhook payload structure:
 
 | Event Type | Description |
 |---|---|
@@ -91,7 +91,7 @@ CryptoVerifyHook emits the following custom event types, all following Stripe's 
 
 ### 3.1 System Overview
 
-CryptoVerifyHook is composed of five core services, each with a single responsibility, communicating through an internal event bus (Redis Streams or NATS JetStream for durability). The system is designed for horizontal scalability — each service can be independently scaled based on chain-specific load.
+StripeOnChain is composed of five core services, each with a single responsibility, communicating through an internal event bus (Redis Streams or NATS JetStream for durability). The system is designed for horizontal scalability — each service can be independently scaled based on chain-specific load.
 
 | Service | Responsibility | Key Technical Decisions |
 |---|---|---|
@@ -103,7 +103,7 @@ CryptoVerifyHook is composed of five core services, each with a single responsib
 
 ### 3.2 Chain-Specific Finality Models
 
-A core engineering challenge is handling the radically different finality guarantees across Stripe's supported chains. CryptoVerifyHook abstracts these differences behind a unified finality state machine while preserving chain-specific granularity in webhook payloads.
+A core engineering challenge is handling the radically different finality guarantees across Stripe's supported chains. StripeOnChain abstracts these differences behind a unified finality state machine while preserving chain-specific granularity in webhook payloads.
 
 | Chain | Finality Type | Time to Finality | Reorg Risk | Monitoring Strategy |
 |---|---|---|---|---|
@@ -129,7 +129,7 @@ The Correlator is the most architecturally complex component. It must match Stri
 
 ### 3.4 Webhook Signature Compatibility
 
-CryptoVerifyHook's webhook signatures follow Stripe's exact signing scheme so that existing Stripe webhook verification libraries work out of the box. The payload header uses the format `t=<timestamp>,v1=<signature>` where the signature is computed as `HMAC-SHA256(webhook_secret, timestamp + "." + payload_body)`. Developers verify CryptoVerifyHook webhooks using the same `stripe.webhooks.constructEvent()` pattern they already use — they just point it at CryptoVerifyHook's signing secret instead.
+StripeOnChain's webhook signatures follow Stripe's exact signing scheme so that existing Stripe webhook verification libraries work out of the box. The payload header uses the format `t=<timestamp>,v1=<signature>` where the signature is computed as `HMAC-SHA256(webhook_secret, timestamp + "." + payload_body)`. Developers verify StripeOnChain webhooks using the same `stripe.webhooks.constructEvent()` pattern they already use — they just point it at StripeOnChain's signing secret instead.
 
 ---
 
@@ -191,7 +191,7 @@ The PostgreSQL schema is designed around three core tables that track the lifecy
 
 ### 6.1 RPC Reliability and Failover
 
-Blockchain RPC endpoints are the system's most failure-prone dependency. CryptoVerifyHook implements a multi-tier RPC strategy:
+Blockchain RPC endpoints are the system's most failure-prone dependency. StripeOnChain implements a multi-tier RPC strategy:
 
 1. **Primary RPC:** Dedicated node provider (Alchemy, QuickNode, or Infura) with WebSocket support. Health-checked every 10 seconds via `eth_blockNumber` / `getSlot` calls.
 2. **Secondary RPC:** A different provider for redundancy. Automatic failover when primary misses 3 consecutive health checks or returns stale block numbers (>30 seconds behind).
@@ -224,23 +224,23 @@ A Grafana dashboard template is included in the repository for one-click observa
 
 ## 7. Interview Talking Points
 
-This section maps CryptoVerifyHook's engineering decisions to the questions and themes likely to arise in a Stripe MaaS / Crypto team interview.
+This section maps StripeOnChain's engineering decisions to the questions and themes likely to arise in a Stripe MaaS / Crypto team interview.
 
 ### 7.1 Distributed Systems
 
 - **Why event-driven over request/response?** Blockchain transactions are inherently asynchronous. A payment can take 400ms (Solana) or 15 minutes (Ethereum) to finalize. An event-driven architecture naturally models this temporal uncertainty without holding connections open or implementing complex polling at the API layer.
-- **How do you handle exactly-once delivery?** CryptoVerifyHook achieves effectively-once semantics through idempotent consumers. Each service uses natural deduplication keys (Stripe event IDs, chain+tx_hash pairs, advisory locks for correlation) so that at-least-once delivery at the event bus layer produces exactly-once business outcomes.
+- **How do you handle exactly-once delivery?** StripeOnChain achieves effectively-once semantics through idempotent consumers. Each service uses natural deduplication keys (Stripe event IDs, chain+tx_hash pairs, advisory locks for correlation) so that at-least-once delivery at the event bus layer produces exactly-once business outcomes.
 - **What happens during a chain reorganization?** The Finality Tracker monitors for uncle/orphan blocks on EVM chains. When a reorg is detected that affects a previously-confirmed transaction, it emits a `chain.reorg.detected` event with the old and new transaction status, resets the correlation to a pending state, and re-verifies from the new canonical chain head.
 
 ### 7.2 API and Product Design
 
-- **Why mirror Stripe's webhook contract?** Developer experience is the moat. By matching Stripe's signing scheme and payload structure, CryptoVerifyHook has zero learning curve for any developer who has integrated Stripe webhooks. This is a deliberate product decision, not just a technical one — it reduces adoption friction to near zero.
+- **Why mirror Stripe's webhook contract?** Developer experience is the moat. By matching Stripe's signing scheme and payload structure, StripeOnChain has zero learning curve for any developer who has integrated Stripe webhooks. This is a deliberate product decision, not just a technical one — it reduces adoption friction to near zero.
 - **How would you evolve this into a Stripe-native feature?** The webhook events could be merged into Stripe's existing event stream as new event types under a `crypto.settlement.*` namespace. The correlation engine would move server-side, with access to Stripe's internal transaction graph (eliminating the heuristic matching). The finality tracker could feed directly into Stripe's payment state machine, enabling a new `confirmed_on_chain` status for Payment Intents.
 
 ### 7.3 Financial Infrastructure
 
 - **How do you handle amount precision?** USDC uses 6 decimal places on EVM chains and Solana. All amounts are stored as NUMERIC in PostgreSQL and processed as BigInt/BigNumber in TypeScript to avoid floating-point errors. The correlation engine matches on raw token units (microUSDC) before any human-readable conversion.
-- **What's the reconciliation philosophy?** Trust, but verify. CryptoVerifyHook doesn't assume Stripe is wrong or the blockchain is wrong. It surfaces discrepancies with full context (both sides of the mismatch, timestamps, amounts) and lets the merchant's system decide how to act. This mirrors the reconciliation principles behind Stripe's own data pipeline, which requires up to 8 separate reports for complete financial accuracy.
+- **What's the reconciliation philosophy?** Trust, but verify. StripeOnChain doesn't assume Stripe is wrong or the blockchain is wrong. It surfaces discrepancies with full context (both sides of the mismatch, timestamps, amounts) and lets the merchant's system decide how to act. This mirrors the reconciliation principles behind Stripe's own data pipeline, which requires up to 8 separate reports for complete financial accuracy.
 
 ---
 
@@ -274,14 +274,14 @@ This section maps CryptoVerifyHook's engineering decisions to the questions and 
 
 ## 9. Why This Project Wins
 
-CryptoVerifyHook sits at the exact intersection of Stripe's two largest bets: **stablecoin infrastructure** and **developer experience**. It demonstrates the ability to think across two fundamentally different system models (traditional payment processing and blockchain consensus), design reliable infrastructure that bridges them, and deliver it in a developer experience that feels native to the Stripe ecosystem.
+StripeOnChain sits at the exact intersection of Stripe's two largest bets: **stablecoin infrastructure** and **developer experience**. It demonstrates the ability to think across two fundamentally different system models (traditional payment processing and blockchain consensus), design reliable infrastructure that bridges them, and deliver it in a developer experience that feels native to the Stripe ecosystem.
 
 For the MaaS Crypto sub-team specifically, this project signals deep understanding of: how Stripe's payment event system works, how stablecoin settlement differs across chains, how to build a correlation engine for financial data without shared identifiers, how to handle the failure modes unique to blockchain infrastructure (reorgs, RPC failures, finality delays), and how to wrap all of that complexity in an API surface so simple that it feels like an extension of Stripe itself.
 
 > **The Signal**
 >
-> Stripemeter proved you can build metering infrastructure with exactly-once guarantees and invoice parity. CryptoVerifyHook proves you can extend that same rigor across the fiat/crypto boundary — the exact problem the Crypto team is solving as they integrate Bridge, scale Tempo, and bring stablecoin payments to Stripe's 300,000+ Billing customers.
+> Stripemeter proved you can build metering infrastructure with exactly-once guarantees and invoice parity. StripeOnChain proves you can extend that same rigor across the fiat/crypto boundary — the exact problem the Crypto team is solving as they integrate Bridge, scale Tempo, and bring stablecoin payments to Stripe's 300,000+ Billing customers.
 
 ---
 
-*CryptoVerifyHook — Technical Deep Dive v1.0 — March 2026*
+*StripeOnChain — Technical Deep Dive v1.0 — March 2026*

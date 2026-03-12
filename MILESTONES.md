@@ -1,4 +1,4 @@
-# CryptoVerifyHook — Milestones & Issues
+# StripeOnChain — Milestones & Issues
 
 Phased delivery plan. Each milestone maps to a set of GitHub issues.
 
@@ -117,4 +117,4 @@ Observability, documentation, and final polish for a production-quality release.
 
 ---
 
-*CryptoVerifyHook — Milestones & Issues — v1.0 — March 2026*
+*StripeOnChain — Milestones & Issues — v1.0 — March 2026*

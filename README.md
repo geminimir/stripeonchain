@@ -1,4 +1,4 @@
-# CryptoVerifyHook
+# StripeOnChain
 
 **Unified on-chain settlement verification for Stripe stablecoin payments.**
 
@@ -12,13 +12,13 @@
 
 When a customer pays with USDC through Stripe, the merchant gets a `payment_intent.succeeded` event — but **zero visibility** into the blockchain side. No transaction hash, no block confirmations, no chain identifier, no finality status.
 
-CryptoVerifyHook runs alongside Stripe and independently verifies on-chain settlement, then delivers chain-enriched webhook events that follow Stripe's exact signing scheme. If you know Stripe webhooks, you already know how to use CryptoVerifyHook.
+StripeOnChain runs alongside Stripe and independently verifies on-chain settlement, then delivers chain-enriched webhook events that follow Stripe's exact signing scheme. If you know Stripe webhooks, you already know how to use StripeOnChain.
 
 ## How It Works
 
 ```
 ┌─────────────┐     ┌──────────────────────────────────────────────────┐     ┌──────────────┐
-│             │     │            CryptoVerifyHook                      │     │              │
+│             │     │            StripeOnChain                      │     │              │
 │   Stripe    │────▶│  Stripe     Chain       Correlator               │     │   Merchant   │
 │  Webhooks   │     │  Listener   Watchers    ──────────▶              │────▶│   Backend    │
 │             │     │     │       (per chain)  Finality   Webhook      │     │              │
@@ -100,7 +100,7 @@ curl -X POST http://localhost:3000/api/webhook-endpoints \
 
 ### Verify Webhooks
 
-CryptoVerifyHook signs payloads using Stripe's exact scheme. Verify them with the same code you use for Stripe:
+StripeOnChain signs payloads using Stripe's exact scheme. Verify them with the same code you use for Stripe:
 
 ```typescript
 import Stripe from 'stripe';
@@ -108,7 +108,7 @@ import Stripe from 'stripe';
 const event = stripe.webhooks.constructEvent(
   body,
   headers['stripe-signature'],
-  process.env.CRYPTOVERIFYHOOK_WEBHOOK_SECRET
+  process.env.STRIPEONCHAIN_WEBHOOK_SECRET
 );
 
 switch (event.type) {
@@ -124,7 +124,7 @@ switch (event.type) {
 
 ## Project Status
 
-CryptoVerifyHook is under active development. See [MILESTONES.md](MILESTONES.md) for the full roadmap.
+StripeOnChain is under active development. See [MILESTONES.md](MILESTONES.md) for the full roadmap.
 
 | Milestone | Status |
 |---|---|

@@ -1,4 +1,4 @@
-# Contributing to CryptoVerifyHook
+# Contributing to StripeOnChain
 
 Thanks for your interest in contributing. This guide will get you from zero to a merged PR.
 
