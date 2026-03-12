@@ -9,10 +9,7 @@ const config: Config = {
     '^@stripeonchain/shared$': '<rootDir>/packages/shared/src',
   },
   transform: {
-    '^.+\\.ts$': [
-      'ts-jest',
-      { tsconfig: 'tsconfig.base.json' },
-    ],
+    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.base.json' }],
   },
   collectCoverageFrom: ['**/src/**/*.ts', '!**/src/**/index.ts', '!**/node_modules/**'],
 };
