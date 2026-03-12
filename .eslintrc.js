@@ -22,5 +22,5 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
   },
-  ignorePatterns: ['dist', 'node_modules', '*.js', '!.eslintrc.js', 'jest.config.ts'],
+  ignorePatterns: ['dist', 'node_modules', '*.js', '!.eslintrc.js', 'jest.config.ts', '**/db/migrations/**', '**/db/seed.ts'],
 };
