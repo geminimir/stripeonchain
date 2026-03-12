@@ -11,6 +11,13 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@stripeonchain/shared": "*"
+    "@stripeonchain/shared": "*",
+    "express": "^5.2.1",
+    "stripe": "^20.4.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/supertest": "^7.2.0",
+    "supertest": "^7.2.2"
   }
 }
