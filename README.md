@@ -18,7 +18,7 @@ StripeOnChain runs alongside Stripe and independently verifies on-chain settleme
 
 ```
 ┌─────────────┐     ┌──────────────────────────────────────────────────┐     ┌──────────────┐
-│             │     │            StripeOnChain                      │     │              │
+│             │     │               StripeOnChain                      │     │              │
 │   Stripe    │────▶│  Stripe     Chain       Correlator               │     │   Merchant   │
 │  Webhooks   │     │  Listener   Watchers    ──────────▶              │────▶│   Backend    │
 │             │     │     │       (per chain)  Finality   Webhook      │     │              │
