@@ -128,9 +128,9 @@ StripeOnChain is under active development. See [MILESTONES.md](MILESTONES.md) fo
 
 | Milestone | Status |
 |---|---|
-| M1: Project Scaffolding | In Progress |
-| M2: Stripe Listener | Planned |
-| M3: Chain Watcher — Base | Planned |
+| M1: Project Scaffolding | Done |
+| M2: Stripe Listener | Done |
+| M3: Chain Watcher — Base | In Progress |
 | M4: Correlator | Planned |
 | M5: Finality Tracker | Planned |
 | M6: Webhook Emitter | Planned |
