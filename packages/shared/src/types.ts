@@ -2,6 +2,23 @@ export type SupportedChain = 'ethereum' | 'base' | 'polygon' | 'solana';
 
 export type FinalityStatus = 'pending' | 'soft_confirmed' | 'finalized' | 'failed';
 
+export type RpcHealthStatus = 'healthy' | 'unhealthy' | 'unknown';
+
+export interface RpcProviderConfig {
+  url: string;
+  name: string;
+  priority: number;
+}
+
+export interface RpcHealthState {
+  status: RpcHealthStatus;
+  lastBlockNumber: number | null;
+  lastBlockTimestamp: number | null;
+  consecutiveFailures: number;
+  lastCheckAt: number | null;
+  lastSuccessAt: number | null;
+}
+
 export type DeliveryStatus = 'pending' | 'succeeded' | 'failed';
 
 export type MismatchType =
