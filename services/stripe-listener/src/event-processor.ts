@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { SupportedChain, USDC_DECIMALS } from '@stripeonchain/shared';
 import { EventStore, InsertableEvent } from './event-store';
+import { EventPublisher, StreamMessage } from './event-publisher';
 
 const ACCEPTED_EVENT_TYPES = new Set([
   'payment_intent.succeeded',
@@ -31,13 +32,20 @@ function parseChainHint(metadata: Record<string, string> | undefined): Supported
 
 export interface ProcessResult {
   processed: boolean;
+  published?: boolean;
   reason?: string;
+}
+
+export interface ProcessorDependencies {
+  store: EventStore;
+  publisher?: EventPublisher;
 }
 
 export async function processStripeEvent(
   event: Stripe.Event,
-  store: EventStore,
+  deps: ProcessorDependencies,
 ): Promise<ProcessResult> {
+  const { store, publisher } = deps;
   if (!ACCEPTED_EVENT_TYPES.has(event.type)) {
     return { processed: false, reason: 'event_type_not_accepted' };
   }
@@ -71,5 +79,23 @@ export async function processStripeEvent(
 
   await store.insertEvent(parsed);
 
-  return { processed: true };
+  let published = false;
+  if (publisher) {
+    const message: StreamMessage = {
+      event_id: parsed.event_id,
+      payment_intent_id: parsed.payment_intent_id,
+      amount: parsed.amount,
+      chain: parsed.chain_hint,
+      token: parsed.token_hint,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      published = await publisher.publish(message);
+    } catch (err) {
+      console.error(`[event-processor] Failed to publish event ${parsed.event_id}:`, err);
+    }
+  }
+
+  return { processed: true, published };
 }

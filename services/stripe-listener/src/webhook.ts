@@ -1,16 +1,18 @@
 import express, { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { EventStore } from './event-store';
+import { EventPublisher } from './event-publisher';
 import { processStripeEvent } from './event-processor';
 
 export interface WebhookAppOptions {
   stripeSecretKey: string;
   stripeWebhookSecret: string;
   eventStore?: EventStore;
+  eventPublisher?: EventPublisher;
 }
 
 export function createWebhookApp(options: WebhookAppOptions): express.Express {
-  const { stripeSecretKey, stripeWebhookSecret, eventStore } = options;
+  const { stripeSecretKey, stripeWebhookSecret, eventStore, eventPublisher } = options;
 
   const stripe = new Stripe(stripeSecretKey);
   const app = express();
@@ -40,7 +42,10 @@ export function createWebhookApp(options: WebhookAppOptions): express.Express {
       }
 
       if (eventStore) {
-        const result = await processStripeEvent(event, eventStore);
+        const result = await processStripeEvent(event, {
+          store: eventStore,
+          publisher: eventPublisher,
+        });
         res.status(200).json({ received: true, type: event.type, ...result });
       } else {
         res.status(200).json({ received: true, type: event.type });
