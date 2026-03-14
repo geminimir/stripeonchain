@@ -28,3 +28,9 @@ export const REDIS_STREAMS = {
   CORRELATION_RESULTS: 'correlation-results',
   WEBHOOK_EVENTS: 'webhook-events',
 };
+
+export const RPC_HEALTH_CHECK = {
+  INTERVAL_MS: 10_000,
+  MAX_CONSECUTIVE_FAILURES: 3,
+  STALE_BLOCK_THRESHOLD_MS: 30_000,
+};
