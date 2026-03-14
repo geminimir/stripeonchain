@@ -19,6 +19,18 @@ export interface RpcHealthState {
   lastSuccessAt: number | null;
 }
 
+export type ConnectionMode = 'websocket' | 'polling' | 'disconnected';
+
+export interface TransferLog {
+  transactionHash: string;
+  blockNumber: number;
+  blockHash: string;
+  logIndex: number;
+  from: string;
+  to: string;
+  value: string;
+}
+
 export type DeliveryStatus = 'pending' | 'succeeded' | 'failed';
 
 export type MismatchType =
