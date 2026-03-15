@@ -1,51 +1,68 @@
-import { REDIS_STREAMS, USDC_CONTRACTS, RpcProviderConfig } from '@stripeonchain/shared';
-import { RpcHealthManager } from './rpc-health-manager';
+import { REDIS_STREAMS, USDC_CONTRACTS } from '@stripeonchain/shared';
+import { BaseChainWatcher } from './base-chain-watcher';
+import { PostgresTransactionStore } from './transaction-store';
 
 const SERVICE_NAME = 'chain-watcher';
 
-function getRpcConfigs(): RpcProviderConfig[] {
-  const primary = process.env.RPC_URL_PRIMARY;
-  const secondary = process.env.RPC_URL_SECONDARY;
-
-  const configs: RpcProviderConfig[] = [];
-
-  if (primary) {
-    configs.push({
-      url: primary,
-      name: 'primary',
-      priority: 1,
-    });
+function getMerchantAddresses(): string[] {
+  const addresses = process.env.MERCHANT_ADDRESSES;
+  if (!addresses) {
+    return [];
   }
-
-  if (secondary) {
-    configs.push({
-      url: secondary,
-      name: 'secondary',
-      priority: 2,
-    });
-  }
-
-  if (configs.length === 0) {
-    throw new Error('At least RPC_URL_PRIMARY must be configured');
-  }
-
-  return configs;
+  return addresses
+    .split(',')
+    .map((addr) => addr.trim())
+    .filter((addr) => addr.length > 0);
 }
 
 async function main() {
   console.info(`[${SERVICE_NAME}] Starting... (publishing to ${REDIS_STREAMS.CHAIN_TRANSACTIONS})`);
   console.info(`[${SERVICE_NAME}] Monitoring USDC contracts:`, USDC_CONTRACTS);
 
-  const rpcConfigs = getRpcConfigs();
-  const healthManager = new RpcHealthManager(rpcConfigs);
+  const httpUrl = process.env.BASE_RPC_URL;
+  const wsUrl = process.env.BASE_RPC_WS_URL;
+  const databaseUrl = process.env.DATABASE_URL;
 
-  console.info(`[${SERVICE_NAME}] Configured ${rpcConfigs.length} RPC provider(s)`);
+  if (!httpUrl || !wsUrl) {
+    throw new Error('BASE_RPC_URL and BASE_RPC_WS_URL must be configured');
+  }
 
-  await healthManager.start();
+  const merchantAddresses = getMerchantAddresses();
+  console.info(`[${SERVICE_NAME}] Configured ${merchantAddresses.length} merchant address(es)`);
 
-  const shutdown = () => {
+  let transactionStore: PostgresTransactionStore | undefined;
+  if (databaseUrl) {
+    transactionStore = new PostgresTransactionStore(databaseUrl);
+    console.info(`[${SERVICE_NAME}] Database connection configured`);
+  } else {
+    console.warn(
+      `[${SERVICE_NAME}] No DATABASE_URL configured, transactions will not be persisted`,
+    );
+  }
+
+  const watcher = new BaseChainWatcher({
+    httpUrl,
+    wsUrl,
+    merchantAddresses,
+    transactionStore,
+  });
+
+  watcher.on('merchantTransfer', (log) => {
+    console.info(`[${SERVICE_NAME}] Merchant transfer: ${log.transactionHash}`);
+  });
+
+  watcher.on('transactionStored', (tx) => {
+    console.info(`[${SERVICE_NAME}] Transaction stored: ${tx.tx_hash}`);
+  });
+
+  await watcher.start();
+
+  const shutdown = async () => {
     console.info(`[${SERVICE_NAME}] Shutting down...`);
-    healthManager.stop();
+    watcher.stop();
+    if (transactionStore) {
+      await transactionStore.close();
+    }
     process.exit(0);
   };
 
