@@ -7,10 +7,11 @@
     "build": "tsc --build",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "test": "jest --passWithNoTests",
+    "test": "jest",
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@stripeonchain/shared": "*"
+    "@stripeonchain/shared": "*",
+    "ioredis": "^5.10.0"
   }
 }

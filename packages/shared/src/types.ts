@@ -100,6 +100,42 @@ export interface PaymentCorrelation {
   discrepancies: Record<string, unknown> | null;
 }
 
+export type CorrelationStatus = 'pending' | 'matched' | 'unmatched';
+
+export interface StripeEventMessage {
+  event_id: string;
+  payment_intent_id: string;
+  amount: string;
+  chain: SupportedChain | null;
+  token: string | null;
+  timestamp: string;
+}
+
+export interface CorrelationCandidate {
+  stripeEvent: StripeEventMessage;
+  chainTransaction: ChainTransactionMessage;
+  confidence: number;
+  matchDetails: MatchDetails;
+}
+
+export interface MatchDetails {
+  amountMatch: boolean;
+  amountDelta: number;
+  timingMatch: boolean;
+  timingDeltaMs: number;
+  chainMatch: boolean;
+  tokenMatch: boolean;
+}
+
+export interface CorrelationResult {
+  stripe_event_id: string;
+  chain_tx_hash: string;
+  chain: SupportedChain;
+  confidence: number;
+  match_details: MatchDetails;
+  correlated_at: string;
+}
+
 export interface WebhookEndpoint {
   id: string;
   url: string;
